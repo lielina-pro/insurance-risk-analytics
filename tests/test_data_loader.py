@@ -1,40 +1,45 @@
 """
-test_data_loader.py
--------------------
-Unit tests for src/data_loader.py — runs in CI without the real dataset.
+test_data_loader.py — Unit tests for src/data_loader.py
+Uses a minimal DataFrame matching the real insurance_data.csv schema.
 """
-
 import pytest
 import pandas as pd
 import numpy as np
-import sys
-import os
-
+import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from src.data_loader import cast_types, assess_missing, handle_missing, engineer_features
 
 
-# ── Fixtures ──────────────────────────────────────────────────────────────────
 @pytest.fixture
 def sample_df():
-    """Minimal DataFrame mimicking the ACIS schema."""
     return pd.DataFrame({
-        "PolicyID": ["P001", "P002", "P003", "P004"],
-        "TransactionMonth": ["2014-03-01", "2014-04-01", "2014-05-01", "2014-06-01"],
-        "TotalPremium": [1000.0, 1500.0, np.nan, 800.0],
-        "TotalClaims": [0.0, 500.0, 200.0, 0.0],
-        "Province": ["Gauteng", "Western Cape", "KwaZulu-Natal", "Gauteng"],
+        "CustomerID": ["AC-001", "AC-002", "AC-003", "AC-004"],
+        "Age": [30, 45, np.nan, 60],
         "Gender": ["Male", "Female", "Male", "Female"],
-        "VehicleType": ["Passenger", "Passenger", "Light Commercial", "Passenger"],
-        "Make": ["Toyota", "BMW", "Toyota", "Ford"],
-        "RegistrationYear": [2010, 2015, 2008, 2012],
+        "Province": ["Addis Ababa", "Oromia", "Tigray", "Addis Ababa"],
+        "VehicleType": ["Sedan", "SUV", "Sedan", "Truck"],
+        "AnnualIncome": [50000.0, 80000.0, 60000.0, np.nan],
+        "RiskScore": [40, 70, 55, 80],
+        "AnnualPremium": [2000.0, 3000.0, 1500.0, 2500.0],
+        "Deductible": [500.0, 500.0, 250.0, 500.0],
+        "NCD": [20, 0, 10, 0],
+        "PastClaims": [1, 3, 0, 2],
+        "Claimed": ["False", "True", "False", "True"],
+        "ClaimAmount": [0.0, 8000.0, 0.0, 12000.0],
+        "TotalPremium": [2000.0, 3000.0, 1500.0, 2500.0],
+        "TotalClaims": [0.0, 8000.0, 0.0, 12000.0],
+        "CoverType": ["Comprehensive", "Third Party", "Comprehensive", "Comprehensive"],
+        "AutoMake": ["Toyota", "Lifan", "Suzuki", "Toyota"],
+        "VehicleModel": ["Corolla", "620", "Grand Vitara", "Hilux"],
+        "CustomValueEstimate": [30000.0, 25000.0, 40000.0, 55000.0],
+        "ZipCode": [10001, 20001, 30001, 10002],
+        "TransactionDate": ["2024-01-15", "2024-03-20", "2024-06-10", "2025-01-05"],
     })
 
 
-# ── cast_types ────────────────────────────────────────────────────────────────
 def test_cast_types_dates(sample_df):
     df = cast_types(sample_df)
-    assert pd.api.types.is_datetime64_any_dtype(df["TransactionMonth"])
+    assert pd.api.types.is_datetime64_any_dtype(df["TransactionDate"])
 
 
 def test_cast_types_categoricals(sample_df):
@@ -49,25 +54,23 @@ def test_cast_types_numerics(sample_df):
     assert pd.api.types.is_float_dtype(df["TotalClaims"])
 
 
-# ── assess_missing ────────────────────────────────────────────────────────────
 def test_assess_missing_detects_nan(sample_df):
     summary = assess_missing(sample_df)
-    assert "TotalPremium" in summary.index
+    assert "Age" in summary.index or "AnnualIncome" in summary.index
 
 
 def test_assess_missing_no_false_positives(sample_df):
     summary = assess_missing(sample_df)
-    assert "PolicyID" not in summary.index
+    assert "CustomerID" not in summary.index
 
 
-# ── handle_missing ────────────────────────────────────────────────────────────
 def test_handle_missing_fills_numeric(sample_df):
     df = cast_types(sample_df)
     df_clean = handle_missing(df)
-    assert df_clean["TotalPremium"].isnull().sum() == 0
+    assert df_clean["Age"].isnull().sum() == 0
+    assert df_clean["AnnualIncome"].isnull().sum() == 0
 
 
-# ── engineer_features ─────────────────────────────────────────────────────────
 def test_engineer_features_loss_ratio(sample_df):
     df = cast_types(sample_df)
     df = handle_missing(df)
@@ -80,23 +83,20 @@ def test_engineer_features_margin(sample_df):
     df = handle_missing(df)
     df = engineer_features(df)
     assert "Margin" in df.columns
-    # Row 1: premium=1500, claims=500 → margin=1000
-    assert df.loc[1, "Margin"] == pytest.approx(1000.0)
+    assert df.loc[1, "Margin"] == pytest.approx(-5000.0)
 
 
 def test_engineer_features_has_claim(sample_df):
     df = cast_types(sample_df)
     df = handle_missing(df)
     df = engineer_features(df)
-    assert "HasClaim" in df.columns
-    assert df.loc[0, "HasClaim"] == 0   # claims = 0
-    assert df.loc[1, "HasClaim"] == 1   # claims = 500
+    assert df.loc[0, "HasClaim"] == 0
+    assert df.loc[1, "HasClaim"] == 1
 
 
-def test_engineer_features_vehicle_age(sample_df):
+def test_engineer_features_transaction_year(sample_df):
     df = cast_types(sample_df)
     df = handle_missing(df)
     df = engineer_features(df)
-    assert "VehicleAge" in df.columns
-    # TransactionMonth 2014, RegistrationYear 2010 → age = 4
-    assert df.loc[0, "VehicleAge"] == 4
+    assert "TransactionYear" in df.columns
+    assert df.loc[0, "TransactionYear"] == 2024
