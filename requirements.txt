@@ -1,0 +1,15 @@
+pandas
+numpy
+matplotlib
+seaborn
+scikit-learn
+xgboost
+scipy
+statsmodels
+dvc
+jupyter
+ipykernel
+flake8
+black
+pytest
+pytest-cov

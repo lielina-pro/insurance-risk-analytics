@@ -8,7 +8,7 @@ Populated fully in the task-3 branch.
 import pandas as pd
 import numpy as np
 from scipy import stats
-from typing import Tuple, Dict
+from typing import Dict
 
 
 def chi_squared_test(df: pd.DataFrame, group_col: str,
