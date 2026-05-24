@@ -278,7 +278,7 @@ def plot_top_vehicle_makes(df: pd.DataFrame, top_n: int = 15) -> plt.Figure:
     top_makes = top_makes[top_makes["Count"] >= 30].nlargest(top_n, "MeanClaim")
 
     fig, ax = plt.subplots(figsize=(10, 6))
-    bars = ax.barh(top_makes.index[::-1], top_makes["MeanClaim"][::-1],
+    ax.barh(top_makes.index[::-1], top_makes["MeanClaim"][::-1],
                    color=sns.color_palette("flare", len(top_makes)))
     ax.set_xlabel("Mean Claim Amount (ZAR)")
     ax.set_title(f"Top {top_n} Vehicle Makes by Mean Claim Amount\n(policies with ≥30 claims)",
