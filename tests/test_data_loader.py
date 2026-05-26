@@ -8,7 +8,10 @@ import numpy as np
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from src.data_loader import cast_types, assess_missing, handle_missing, engineer_features
+from src.data_loader import cast_types
+import assess_missing
+import handle_missing
+import engineer_features
 
 
 @pytest.fixture
