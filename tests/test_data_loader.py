@@ -5,9 +5,13 @@ Uses a minimal DataFrame matching the real insurance_data.csv schema.
 import pytest
 import pandas as pd
 import numpy as np
-import sys`nimport os
+import sys
+import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from src.data_loader import cast_types, assess_missing, handle_missing, engineer_features
+from src.data_loader import cast_types
+from src.data_loader import assess_missing
+from src.data_loader import handle_missing
+from src.data_loader import engineer_features
 
 
 @pytest.fixture
